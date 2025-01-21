@@ -15,7 +15,6 @@
   *
   ******************************************************************************
   */
-#define TASK 5
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
@@ -26,23 +25,29 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#if TASK == 2
-#include "bmp2_config.h"
-#endif
-#if TASK == 3
-#include <stdio.h>
-#include "bmp2_config.h"
-#endif
-#if TASK == 4
-#include <stdio.h>
-#include "bmp2_config.h"
-#endif
-#if TASK == 5
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "bmp2_config.h"
 #include "heater_config.h"
-#endif
+#include "fan_config.h"
+
+// PID parameters
+#define PID_KP_HEAT 0.8f
+#define PID_KI_HEAT 0.1f
+#define PID_KD_HEAT 0.02f
+
+#define PID_KP_COOL 0.4f
+#define PID_KI_COOL 0.02f
+#define PID_KD_COOL 0.01f
+
+// Temperature control limits
+#define MIN_TEMP 25.0f
+#define MAX_TEMP 30.0f
+
+// Fan parameters
+#define FAN_MIN_DUTY 60.0f
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -63,45 +68,28 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-#if TASK == 2
-float temp_degC = 0.0f;
-#endif
-#if TASK == 3
-float temp_degC = 0.0f;
-#endif
-#if TASK == 4
-int temp_mdegC = 0;
-int press_Pa = 0;
-#endif
-#if TASK == 5
-int temp_mdegC = 0;
-int press_Pa = 0;
-uint8_t tx_buffer[8];
-const int tx_msg_len = 4;
-#endif
+uint8_t rx_buffer[20]; // Buffer for receiving user input
+const int rx_msg_len = 20;
+uint8_t temp_msg_buffer[50]; // Buffer for temperature messages
+uint32_t last_temp_print_time = 0; // To track when the last temperature message was printed
+
+float target_temperature = MIN_TEMP;
+float current_temperature = 0.0f;
+float pid_error = 0.0f;
+float pid_integral = 0.0f;
+float pid_derivative = 0.0f;
+float pid_output = 0.0f;
+float previous_error = 0.0f;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
-
+void process_user_input(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-#if TASK == 3
-int _write(int file, char *ptr, int len)
-{
-  return (HAL_UART_Transmit(&huart3, (uint8_t*)ptr, len, HAL_MAX_DELAY) == HAL_OK) ? len : -1;
-}
-#endif
-#if TASK == 4
-int _write(int file, char *ptr, int len)
-{
-  return (HAL_UART_Transmit(&huart3, (uint8_t*)ptr, len, HAL_MAX_DELAY) == HAL_OK) ? len : -1;
-}
-#endif
-#if TASK == 5
 int _write(int file, char *ptr, int len)
 {
   return (HAL_UART_Transmit(&huart3, (uint8_t*)ptr, len, HAL_MAX_DELAY) == HAL_OK) ? len : -1;
@@ -114,14 +102,38 @@ int _write(int file, char *ptr, int len)
  */
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
- if(huart == &huart3)
- {
-  HEATER_PWM_WriteDuty(&hheater, atoi((char*)&tx_buffer[1]));
-  HAL_UART_Receive_IT(&huart3, tx_buffer, tx_msg_len);
- }
+    if (huart == &huart3)
+    {
+        // Check for a specific command to change the target temperature
+        if (strncmp((char*)rx_buffer, "settemp:", 8) == 0)
+        {
+            process_user_input();
+        }
+
+        // Restart the UART receive with the maximum buffer size
+        HAL_UART_Receive_IT(&huart3, rx_buffer, sizeof(rx_buffer));
+    }
 }
 
-#endif
+void process_user_input() {
+    float new_target_temp;
+
+    // Attempt to parse the new target temperature
+    if (sscanf((char*)rx_buffer, "settemp:%f", &new_target_temp) == 1) {
+        if (new_target_temp >= MIN_TEMP && new_target_temp <= MAX_TEMP) {
+            target_temperature = new_target_temp;
+            printf("Target temperature updated to: %.1f °C\r\n", target_temperature);
+        } else {
+            printf("Invalid temperature. Please enter a value between %.1f and %.1f °C.\r\n", MIN_TEMP, MAX_TEMP);
+        }
+    } else {
+        printf("Invalid command format. Use 'settemp:XX.X'.\r\n");
+    }
+
+    // Clear the buffer after processing
+    memset(rx_buffer, 0, sizeof(rx_buffer));
+}
+
 /* USER CODE END 0 */
 
 /**
@@ -157,57 +169,67 @@ int main(void)
   MX_SPI4_Init();
   MX_TIM2_Init();
   MX_TIM7_Init();
+  MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
-  #if TASK == 2
-  BMP2_Init(&bmp2dev);
-  #endif
-  #if TASK == 3
-  BMP2_Init(&bmp2dev);
-  #endif
-  #if TASK == 4
-  BMP2_Init(&bmp2dev);
-  #endif
-  #if TASK == 5
   BMP2_Init(&bmp2dev);
   HEATER_PWM_Init(&hheater);
-  HAL_UART_Receive_IT(&huart3, tx_buffer, tx_msg_len);
+  FAN_PWM_Init(&hfan);
+  HAL_UART_Receive_IT(&huart3, rx_buffer, sizeof(rx_buffer)); // Start receiving user input
   HAL_TIM_Base_Start(&htim7);
-  #endif
+
+  // No initial user input needed here
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    #if TASK == 2
-    temp_degC = BMP2_ReadTemperature_degC(&bmp2dev);
-    HAL_Delay(1000);
-    #endif
-    #if TASK == 3
-    temp_degC = BMP2_ReadTemperature_degC(&bmp2dev);
-    printf("{\"id\":1,\"temp\":%5.2f }\r\n", temp_degC);
-    HAL_Delay(1000);
-    #endif
-    #if TASK == 4
-    double temp, press;
-    BMP2_ReadData(&bmp2dev, &press, &temp);
-    temp_mdegC = 1000*temp;
-    press_Pa = 100*press;
-    printf("{\"id\":1,\"temp\":%5.2f, \"press\":%7.2f }\r\n", (float)temp, (float)press);
-    HAL_Delay(250);
-    #endif
-    #if TASK == 5
     if(__HAL_TIM_GET_FLAG(&htim7, TIM_FLAG_UPDATE))
     {
-      __HAL_TIM_CLEAR_FLAG(&htim7, TIM_FLAG_UPDATE);
+        __HAL_TIM_CLEAR_FLAG(&htim7, TIM_FLAG_UPDATE);
 
-      double temp, press;
-      BMP2_ReadData(&bmp2dev, &press, &temp);
-      temp_mdegC = 1000*temp;
-      press_Pa = 100*press;
-      printf("{\"id\":1,\"temp\":%5.2f, \"press\":%7.2f }\r\n", (float)temp, (float)press);
+        double temp;
+        BMP2_ReadData(&bmp2dev, NULL, &temp);
+        current_temperature = (float)temp;
+
+        // PID Control
+        pid_error = target_temperature - current_temperature;
+        pid_integral += pid_error;
+        pid_derivative = pid_error - previous_error;
+        previous_error = pid_error;
+
+        // Control Logic
+        if (current_temperature < target_temperature) {
+            // Heating
+            pid_output = (PID_KP_HEAT * pid_error) + (PID_KI_HEAT * pid_integral) + (PID_KD_HEAT * pid_derivative);
+            float heater_duty = pid_output;
+            if (heater_duty < 0.0f) heater_duty = 0.0f;
+            if (heater_duty > 100.0f) heater_duty = 100.0f;
+
+            HEATER_PWM_WriteDuty(&hheater, 5*heater_duty);
+            FAN_PWM_WriteDuty(&hfan, 0.0f);
+        } else {
+            // Cooling
+            pid_output = (PID_KP_COOL * pid_error) + (PID_KI_COOL * pid_integral) + (PID_KD_COOL * pid_derivative);
+            HEATER_PWM_WriteDuty(&hheater, 0.0f);
+
+            float fan_duty = -pid_output;
+            if (fan_duty < 0.0f) fan_duty = 0.0f;
+            if (fan_duty > 100.0f) fan_duty = 100.0f;
+
+            FAN_PWM_WriteDuty(&hfan, fan_duty);
+        }
+
+        // Print temperature every 5 seconds
+        if (HAL_GetTick() - last_temp_print_time >= 5000) {
+            sprintf((char*)temp_msg_buffer, "{\"id\":1, \"target_temp\":%5.2f, \"temp\":%5.2f, \"pid_output\":%5.2f}\r\n", target_temperature, current_temperature, pid_output);
+            HAL_UART_Transmit(&huart3, temp_msg_buffer, strlen((char*)temp_msg_buffer), HAL_MAX_DELAY);
+            last_temp_print_time = HAL_GetTick();
+        }
     }
-    #endif
+
+    HAL_Delay(100); // Adjust control loop frequency if needed
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

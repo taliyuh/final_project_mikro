@@ -1,0 +1,8 @@
+../Components/Src/fan.c:33:6:FAN_DIO_On	16	static
+../Components/Src/fan.c:43:6:FAN_DIO_Off	16	static
+../Components/Src/fan.c:53:6:FAN_DIO_Toggle	16	static
+../Components/Src/fan.c:64:6:FAN_DIO_Write	16	static
+../Components/Src/fan.c:74:23:FAN_DIO_Read	24	static
+../Components/Src/fan.c:85:6:FAN_PWM_Init	16	static
+../Components/Src/fan.c:97:6:FAN_PWM_WriteDuty	24	static
+../Components/Src/fan.c:122:7:FAN_PWM_ReadDuty	16	static
