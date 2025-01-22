@@ -32,21 +32,25 @@
 #include "heater_config.h"
 #include "fan_config.h"
 
-// PID parameters
-#define PID_KP_HEAT 0.8f
-#define PID_KI_HEAT 0.1f
-#define PID_KD_HEAT 0.02f
 
-#define PID_KP_COOL 0.4f
+// PID parameters for heating (from MATLAB)
+#define PID_KP_HEAT 7.0f
+#define PID_KI_HEAT 0.25f
+#define PID_KD_HEAT 250.0f
+
+// PID parameters for cooling (you might want to start with the same values
+// and then tune them separately if needed)
+#define PID_KP_COOL 10.0f
 #define PID_KI_COOL 0.02f
-#define PID_KD_COOL 0.01f
+#define PID_KD_COOL 450.0f
+
+
 
 // Temperature control limits
 #define MIN_TEMP 25.0f
-#define MAX_TEMP 30.0f
-
-// Fan parameters
-#define FAN_MIN_DUTY 60.0f
+#define MAX_TEMP 30.5f
+#define INTEGRAL_MAX 1000.0f // Example maximum value for the integral term
+#define INTEGRAL_MIN -1000.0f // Example minimum value for the integral term
 
 /* USER CODE END Includes */
 
@@ -73,7 +77,7 @@ const int rx_msg_len = 20;
 uint8_t temp_msg_buffer[50]; // Buffer for temperature messages
 uint32_t last_temp_print_time = 0; // To track when the last temperature message was printed
 
-float target_temperature = MIN_TEMP;
+float target_temperature = 29.0;//MIN_TEMP;
 float current_temperature = 0.0f;
 float pid_error = 0.0f;
 float pid_integral = 0.0f;
@@ -104,36 +108,45 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
     if (huart == &huart3)
     {
-        // Check for a specific command to change the target temperature
-        if (strncmp((char*)rx_buffer, "settemp:", 8) == 0)
-        {
-            process_user_input();
-        }
+        // Process the received character immediately
+        process_user_input();
 
-        // Restart the UART receive with the maximum buffer size
-        HAL_UART_Receive_IT(&huart3, rx_buffer, sizeof(rx_buffer));
+        // Restart UART reception for a single character
+        HAL_UART_Receive_IT(&huart3, rx_buffer, 1);
     }
 }
+
 
 void process_user_input() {
-    float new_target_temp;
+    static uint8_t input_buffer[20];
+    static uint8_t input_index = 0;
 
-    // Attempt to parse the new target temperature
-    if (sscanf((char*)rx_buffer, "settemp:%f", &new_target_temp) == 1) {
-        if (new_target_temp >= MIN_TEMP && new_target_temp <= MAX_TEMP) {
-            target_temperature = new_target_temp;
-            printf("Target temperature updated to: %.1f °C\r\n", target_temperature);
-        } else {
-            printf("Invalid temperature. Please enter a value between %.1f and %.1f °C.\r\n", MIN_TEMP, MAX_TEMP);
-        }
-    } else {
-        printf("Invalid command format. Use 'settemp:XX.X'.\r\n");
+    // Add the received character to the input buffer
+    if (input_index < sizeof(input_buffer) - 1) {
+        input_buffer[input_index++] = rx_buffer[0];
     }
 
-    // Clear the buffer after processing
-    memset(rx_buffer, 0, sizeof(rx_buffer));
-}
+    // Check if the received character is a newline, indicating the end of a command
+    if (rx_buffer[0] == '\n' || rx_buffer[0] == '\r') {
+        input_buffer[input_index] = '\0'; // Null-terminate the string
 
+        float new_target_temp;
+        if (sscanf((char*)input_buffer, "settemp:%f", &new_target_temp) == 1) {
+            if (new_target_temp >= MIN_TEMP && new_target_temp <= MAX_TEMP) {
+                target_temperature = new_target_temp;
+                printf("Target temperature updated to: %.2f °C\r\n", target_temperature);
+            } else {
+                printf("Invalid temperature. Please enter a value between %.1f and %.1f °C.\r\n", MIN_TEMP, MAX_TEMP);
+            }
+        } else {
+            printf("Invalid command format. Use 'settemp:XX.X'.\r\n");
+        }
+
+        // Reset the input buffer and index for the next command
+        input_index = 0;
+        memset(input_buffer, 0, sizeof(input_buffer));
+    }
+}
 /* USER CODE END 0 */
 
 /**
@@ -194,35 +207,68 @@ int main(void)
         current_temperature = (float)temp;
 
         // PID Control
-        pid_error = target_temperature - current_temperature;
-        pid_integral += pid_error;
-        pid_derivative = pid_error - previous_error;
-        previous_error = pid_error;
+        // PID Control Logic Improvements
+        // Anti-Windup Parameters
+        float pid_output_saturated = 0.0f; // Store the saturated PID output
+        const float back_calculation_gain = 0.1f; // Gain for anti-windup
+        float feedforward = 0.5f * (target_temperature - MIN_TEMP); // Scale based on system characteristics
+        pid_output += feedforward;
 
-        // Control Logic
+        // Derivative Filter Parameters
+        const float derivative_filter_constant = 0.9f; // Adjust as needed
+        float previous_derivative = 0.0f;
+
         if (current_temperature < target_temperature) {
             // Heating
-            pid_output = (PID_KP_HEAT * pid_error) + (PID_KI_HEAT * pid_integral) + (PID_KD_HEAT * pid_derivative);
-            float heater_duty = pid_output;
-            if (heater_duty < 0.0f) heater_duty = 0.0f;
-            if (heater_duty > 100.0f) heater_duty = 100.0f;
+            pid_error = target_temperature - current_temperature;
 
-            HEATER_PWM_WriteDuty(&hheater, 5*heater_duty);
+            // Integral term with anti-windup
+            pid_integral += pid_error;
+            if (pid_output_saturated != pid_output) { // Back-calculation
+                pid_integral -= back_calculation_gain * (pid_output_saturated - pid_output);
+            }
+            pid_integral = fminf(fmaxf(pid_integral, INTEGRAL_MIN), INTEGRAL_MAX); // Clamp
+
+            // Derivative term with filtering
+            pid_derivative = (pid_error - previous_error);
+            pid_derivative = derivative_filter_constant * previous_derivative + (1.0f - derivative_filter_constant) * pid_derivative;
+
+            // PID output
+            pid_output = (PID_KP_HEAT * pid_error) + (PID_KI_HEAT * pid_integral) + (PID_KD_HEAT * pid_derivative);
+            pid_output_saturated = fminf(fmaxf(pid_output, 0.0f), 100.0f);
+
+            HEATER_PWM_WriteDuty(&hheater, 5 * pid_output_saturated);
             FAN_PWM_WriteDuty(&hfan, 0.0f);
+
         } else {
             // Cooling
+            pid_error = target_temperature - current_temperature;
+
+            // Integral term with anti-windup
+            pid_integral += pid_error;
+            if (pid_output_saturated != pid_output) { // Back-calculation
+                pid_integral -= back_calculation_gain * (pid_output_saturated - pid_output);
+            }
+            pid_integral = fminf(fmaxf(pid_integral, INTEGRAL_MIN), INTEGRAL_MAX); // Clamp
+
+            // Derivative term with filtering
+            pid_derivative = (pid_error - previous_error);
+            pid_derivative = derivative_filter_constant * previous_derivative + (1.0f - derivative_filter_constant) * pid_derivative;
+
+            // PID output
             pid_output = (PID_KP_COOL * pid_error) + (PID_KI_COOL * pid_integral) + (PID_KD_COOL * pid_derivative);
+            pid_output_saturated = fminf(fmaxf(-pid_output, 0.0f), 100.0f);
+
+            FAN_PWM_WriteDuty(&hfan, 3 * pid_output_saturated);
             HEATER_PWM_WriteDuty(&hheater, 0.0f);
-
-            float fan_duty = -pid_output;
-            if (fan_duty < 0.0f) fan_duty = 0.0f;
-            if (fan_duty > 100.0f) fan_duty = 100.0f;
-
-            FAN_PWM_WriteDuty(&hfan, fan_duty);
         }
 
+        // Update previous values
+        previous_error = pid_error;
+        previous_derivative = pid_derivative;
+
         // Print temperature every 5 seconds
-        if (HAL_GetTick() - last_temp_print_time >= 5000) {
+        if (HAL_GetTick() - last_temp_print_time >= 1000) {
             sprintf((char*)temp_msg_buffer, "{\"id\":1, \"target_temp\":%5.2f, \"temp\":%5.2f, \"pid_output\":%5.2f}\r\n", target_temperature, current_temperature, pid_output);
             HAL_UART_Transmit(&huart3, temp_msg_buffer, strlen((char*)temp_msg_buffer), HAL_MAX_DELAY);
             last_temp_print_time = HAL_GetTick();
