@@ -22,6 +22,7 @@
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
+#include <time.h>
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -47,11 +48,10 @@
 
 
 // Temperature control limits
-#define MIN_TEMP 25.0f
-#define MAX_TEMP 30.5f
-#define INTEGRAL_MAX 1000.0f // Example maximum value for the integral term
-#define INTEGRAL_MIN -1000.0f // Example minimum value for the integral term
-
+#define MIN_TEMP 22.0f
+#define MAX_TEMP 32.5f
+#define INTEGRAL_MAX 500.0f // Example maximum value for the integral term
+#define INTEGRAL_MIN -500.0f // Example minimum value for the integral term
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -115,8 +115,6 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
         HAL_UART_Receive_IT(&huart3, rx_buffer, 1);
     }
 }
-
-
 void process_user_input() {
     static uint8_t input_buffer[20];
     static uint8_t input_index = 0;
@@ -189,6 +187,8 @@ int main(void)
   FAN_PWM_Init(&hfan);
   HAL_UART_Receive_IT(&huart3, rx_buffer, sizeof(rx_buffer)); // Start receiving user input
   HAL_TIM_Base_Start(&htim7);
+  srand((unsigned int)time(NULL)); // Seed the random number generator
+  uint32_t last_temp_update_time = HAL_GetTick(); // Track last random temperature update
 
   // No initial user input needed here
 
@@ -205,6 +205,15 @@ int main(void)
         double temp;
         BMP2_ReadData(&bmp2dev, NULL, &temp);
         current_temperature = (float)temp;
+
+        if (HAL_GetTick() - last_temp_update_time >= 60000) // Check if 10 seconds have passed
+        {
+            last_temp_update_time = HAL_GetTick();
+
+            // Generate a random temperature within the range [MIN_TEMP, MAX_TEMP]
+            float random_temp = MIN_TEMP + ((float)rand() / RAND_MAX) * (MAX_TEMP - MIN_TEMP);
+            target_temperature = random_temp;
+        }
 
         // PID Control
         // PID Control Logic Improvements
@@ -273,13 +282,14 @@ int main(void)
             HAL_UART_Transmit(&huart3, temp_msg_buffer, strlen((char*)temp_msg_buffer), HAL_MAX_DELAY);
             last_temp_print_time = HAL_GetTick();
         }
-    }
+
 
     HAL_Delay(100); // Adjust control loop frequency if needed
     /* USER CODE END WHILE */
-
-    /* USER CODE BEGIN 3 */
+    }
   }
+    /* USER CODE BEGIN 3 */
+
   /* USER CODE END 3 */
 }
 
