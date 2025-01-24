@@ -41,9 +41,9 @@
 
 // PID parameters for cooling (you might want to start with the same values
 // and then tune them separately if needed)
-#define PID_KP_COOL 10.0f
-#define PID_KI_COOL 0.02f
-#define PID_KD_COOL 450.0f
+#define PID_KP_COOL 7.0f
+#define PID_KI_COOL 0.25f
+#define PID_KD_COOL 250.0f
 
 
 
@@ -77,7 +77,7 @@ const int rx_msg_len = 20;
 uint8_t temp_msg_buffer[50]; // Buffer for temperature messages
 uint32_t last_temp_print_time = 0; // To track when the last temperature message was printed
 
-float target_temperature = 29.0;//MIN_TEMP;
+float target_temperature = 32.0;//MIN_TEMP;
 float current_temperature = 0.0f;
 float pid_error = 0.0f;
 float pid_integral = 0.0f;
@@ -206,14 +206,14 @@ int main(void)
         BMP2_ReadData(&bmp2dev, NULL, &temp);
         current_temperature = (float)temp;
 
-        if (HAL_GetTick() - last_temp_update_time >= 60000) // Check if 10 seconds have passed
-        {
-            last_temp_update_time = HAL_GetTick();
-
-            // Generate a random temperature within the range [MIN_TEMP, MAX_TEMP]
-            float random_temp = MIN_TEMP + ((float)rand() / RAND_MAX) * (MAX_TEMP - MIN_TEMP);
-            target_temperature = random_temp;
-        }
+//        if (HAL_GetTick() - last_temp_update_time >= 60000) // Check if 10 seconds have passed
+//        {
+//            last_temp_update_time = HAL_GetTick();
+//
+//            // Generate a random temperature within the range [MIN_TEMP, MAX_TEMP]
+//            float random_temp = MIN_TEMP + ((float)rand() / RAND_MAX) * (MAX_TEMP - MIN_TEMP);
+//            target_temperature = random_temp;
+//        }
 
         // PID Control
         // PID Control Logic Improvements
