@@ -42,7 +42,7 @@
 /* USER CODE BEGIN PV */
 
 uint8_t rx_buffer[20];
-float target_temperature = 30.0f;
+float target_temperature = 32.0f;
 float current_temperature = 0.0f;
 uint8_t temp_msg_buffer[100];
 uint32_t last_temp_print_time = 0;
@@ -115,7 +115,7 @@ int main(void)
     BMP2_Init(&bmp2dev);
     HEATER_PWM_Init(&hheater);
     FAN_PWM_Init(&hfan);
-    HAL_UART_Receive_IT(&huart3, rx_buffer, sizeof(rx_buffer)); // Start receiving user input
+    HAL_UART_Receive_IT(&huart3, rx_buffer, sizeof(rx_buffer));
     HAL_TIM_Base_Start(&htim7);
     PID_Init();
     pid_controller.target_temperature = target_temperature;
@@ -131,7 +131,7 @@ int main(void)
             // Update target temperature for the single controller
             pid_controller.target_temperature = target_temperature;
 
-            // Feedforward (using the single target_temperature)
+            // Feedforward
             float feedforward = 0.5f * (target_temperature - MIN_TEMP);
 
             // PID Control
