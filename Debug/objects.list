@@ -8,6 +8,7 @@
 "./Components/Src/pwm.o"
 "./Core/Src/gpio.o"
 "./Core/Src/main.o"
+"./Core/Src/pid_control.o"
 "./Core/Src/spi.o"
 "./Core/Src/stm32f7xx_hal_msp.o"
 "./Core/Src/stm32f7xx_it.o"

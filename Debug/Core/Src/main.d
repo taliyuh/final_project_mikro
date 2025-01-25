@@ -42,7 +42,8 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
  C:/Users/bartl/Downloads/adrianwojcikpp\ NUCLEO-F746ZG-Examples-ver-2024-25\ main\ L06_Example(1)/Components/Inc/dio.h \
  C:/Users/bartl/Downloads/adrianwojcikpp\ NUCLEO-F746ZG-Examples-ver-2024-25\ main\ L06_Example(1)/Components/Inc/pwm.h \
  C:/Users/bartl/Downloads/adrianwojcikpp\ NUCLEO-F746ZG-Examples-ver-2024-25\ main\ L06_Example(1)/Components/Inc/fan_config.h \
- C:/Users/bartl/Downloads/adrianwojcikpp\ NUCLEO-F746ZG-Examples-ver-2024-25\ main\ L06_Example(1)/Components/Inc/fan.h
+ C:/Users/bartl/Downloads/adrianwojcikpp\ NUCLEO-F746ZG-Examples-ver-2024-25\ main\ L06_Example(1)/Components/Inc/fan.h \
+ ../Core/Inc/pid_control.h
 ../Core/Inc/main.h:
 ../Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal.h:
 ../Core/Inc/stm32f7xx_hal_conf.h:
@@ -92,3 +93,4 @@ C:/Users/bartl/Downloads/adrianwojcikpp\ NUCLEO-F746ZG-Examples-ver-2024-25\ mai
 C:/Users/bartl/Downloads/adrianwojcikpp\ NUCLEO-F746ZG-Examples-ver-2024-25\ main\ L06_Example(1)/Components/Inc/pwm.h:
 C:/Users/bartl/Downloads/adrianwojcikpp\ NUCLEO-F746ZG-Examples-ver-2024-25\ main\ L06_Example(1)/Components/Inc/fan_config.h:
 C:/Users/bartl/Downloads/adrianwojcikpp\ NUCLEO-F746ZG-Examples-ver-2024-25\ main\ L06_Example(1)/Components/Inc/fan.h:
+../Core/Inc/pid_control.h:
