@@ -1,9 +1,13 @@
-/*
- * fan_config.c
- *
- *  Created on: Jan 21, 2025
- *      Author: bartl
- */
+/**
+  ******************************************************************************
+  * @file     : fan_config.c
+  * @author   : taliyuh bartlomiej.hryniewski@student.put.poznan.pl
+  * @version  : 1.0.0
+  * @date     : Jan 21, 2025
+  * @brief    : Electric fan components configuration file
+  *
+  ******************************************************************************
+  */
 
 /* Private includes ----------------------------------------------------------*/
 #include "fan.h"

@@ -1,9 +1,13 @@
-/*
- * fan.h
- *
- *  Created on: Jan 21, 2025
- *      Author: bartl
- */
+/**
+  ******************************************************************************
+  * @file     : fan.h
+  * @author   : taliyuh    bartlomiej.hryniewski@student.put.poznan.pl
+  * @version  : 1.0.0
+  * @date     : Jan 21, 2025
+  * @brief    : Electric fan components driver
+  *
+  ******************************************************************************
+  */
 
 #ifndef INC_FAN_H_
 #define INC_FAN_H_

@@ -1,10 +1,13 @@
-/*
- * fan_config.h
- *
- *  Created on: Jan 21, 2025
- *      Author: bartl
- */
-
+/**
+  ******************************************************************************
+  * @file     : fan_config.h
+  * @author   : taliyuh    bartlomiej.hryniewski@student.put.poznan.pl
+  * @version  : 1.0.0
+  * @date     : Jan 21, 2025
+  * @brief    : Electric fan components configuration file
+  *
+  ******************************************************************************
+  */
 #ifndef INC_FAN_CONFIG_H_
 #define INC_FAN_CONFIG_H_
 
