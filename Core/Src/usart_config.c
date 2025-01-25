@@ -1,38 +1,30 @@
 /* USER CODE BEGIN Header */
 /**
   ******************************************************************************
-  * @file    usart_config.c
-  * @author  taliyuh    bartlomiej.hryniewski@student.put.poznan.pl
-  * @brief   This file provides code for the configuration
-  *          of the USART3 instance.
+  * @file     : usart_config.c
+  * @author   : taliyuh    bartlomiej.hryniewski@student.put.poznan.pl
   * @version  : 1.0.0
   * @date     : Jan 21, 2025
-  * @brief    : Electric fan components driver
-  *
+  * @brief    : This file provides functions for USART3 communication.
   ******************************************************************************
   */
 /* USER CODE END Header */
 
 /* Includes ------------------------------------------------------------------*/
 #include "usart_config.h"
-#include "main.h" // Assuming you have GPIO and other definitions there
+#include "usart.h"
 
 /* Private typedef -----------------------------------------------------------*/
 
 /* Private define ------------------------------------------------------------*/
-/**
- * @brief USART3 default baud rate.
- */
-#define USART3_DEFAULT_BAUDRATE 115200
 
 /* Private macro -------------------------------------------------------------*/
 
 /* Private variables ---------------------------------------------------------*/
 
 /* Public variables ----------------------------------------------------------*/
-/**
- * @brief USART3 handle.
- */
+
+// Define huart3 here
 UART_HandleTypeDef huart3;
 
 /* Private function prototypes -----------------------------------------------*/
@@ -44,7 +36,7 @@ UART_HandleTypeDef huart3;
 /* Public functions ----------------------------------------------------------*/
 
 /**
- * @brief  Initializes the USART3 peripheral.
+ * @brief  Initializes the USART3 peripheral with default configuration.
  * @retval None
  */
 void MX_USART3_UART_Init(void)

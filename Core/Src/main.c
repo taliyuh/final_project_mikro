@@ -1,38 +1,42 @@
-/* USER CODE BEGIN Header */
-/**
-  ******************************************************************************
-  * @file           : main.c
-  * @brief          : Main program body
-  ******************************************************************************
-  * @attention
-  *
-  * Copyright (c) 2024 STMicroelectronics.
-  * All rights reserved.
-  *
-  * This software is licensed under terms that can be found in the LICENSE file
-  * in the root directory of this software component.
-  * If no LICENSE file comes with this software, it is provided AS-IS.
-  *
-  ******************************************************************************
-  */
-/* USER CODE END Header */
-/* Includes ------------------------------------------------------------------*/
+/* USER CODE BEGIN Header /
+/*
+
+    @file           : main.c
+
+    @brief          : Main program body
+
+    @attention
+
+    Copyright (c) 2024 STMicroelectronics.
+
+    All rights reserved.
+
+    This software is licensed under terms that can be found in the LICENSE file
+
+    in the root directory of this software component.
+
+    If no LICENSE file comes with this software, it is provided AS-IS.
+
+/
+/ USER CODE END Header /
+/ Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "spi.h"
 #include "tim.h"
 #include "usart.h"
+#include "usart_config.h"
 #include "gpio.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include "bmp2_config.h"
 #include "heater_config.h"
 #include "fan_config.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 // PID parameters for heating
-#define PID_KP_HEAT 7.0f
-#define PID_KI_HEAT 0.25f
-#define PID_KD_HEAT 250.0f
+#define PID_KP 7.0f
+#define PID_KI 0.25f
+#define PID_KD 250.0f
 
 // Temperature control limits
 #define MIN_TEMP 22.0f
@@ -46,6 +50,7 @@ float target_temperature = 29.0f;
 float current_temperature = 0.0f;
 float pid_error = 0.0f;
 float pid_integral = 0.0f;
+float pid_derivative = 0.0f;
 float pid_output = 0.0f;
 float previous_error = 0.0f;
 uint8_t temp_msg_buffer[100]; // Buffer for temperature messages
@@ -61,106 +66,158 @@ void process_user_input(void);
 /* USER CODE BEGIN 0 */
 int _write(int file, char *ptr, int len)
 {
-  return (HAL_UART_Transmit(&huart3, (uint8_t *)ptr, len, HAL_MAX_DELAY) == HAL_OK) ? len : -1;
+return (HAL_UART_Transmit(&huart3, (uint8_t *)ptr, len, HAL_MAX_DELAY) == HAL_OK) ? len : -1;
 }
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
-    if (huart == &huart3)
-    {
-        process_user_input();
-        HAL_UART_Receive_IT(&huart3, rx_buffer, sizeof(rx_buffer)); // Restart reception
-    }
+if (huart == &huart3)
+{
+process_user_input();
+HAL_UART_Receive_IT(&huart3, rx_buffer, sizeof(rx_buffer)); // Restart reception
+}
 }
 
 uint16_t calculate_crc(const uint8_t *data, size_t length)
 {
-    uint16_t crc = 0xFFFF;
-    for (size_t i = 0; i < length; i++) {
-        crc ^= data[i];
-        for (uint8_t j = 0; j < 8; j++) {
-            if (crc & 0x0001) {
-                crc = (crc >> 1) ^ 0xA001;
-            } else {
-                crc >>= 1;
-            }
-        }
-    }
-    return crc;
+uint16_t crc = 0xFFFF;
+for (size_t i = 0; i < length; i++) {
+crc ^= data[i];
+for (uint8_t j = 0; j < 8; j++) {
+if (crc & 0x0001) {
+crc = (crc >> 1) ^ 0xA001;
+} else {
+crc >>= 1;
+}
+}
+}
+return crc;
 }
 
 void process_user_input(void)
 {
-    char input[20];
-    memcpy(input, rx_buffer, sizeof(rx_buffer));
-    float new_temp = atof(input);
+char input[20];
+memcpy(input, rx_buffer, sizeof(rx_buffer));
+float new_temp = atof(input);
 
-    if (new_temp >= MIN_TEMP && new_temp <= MAX_TEMP) {
-        target_temperature = new_temp;
-        printf("Target temperature set to: %.2f\r\n", target_temperature);
-    } else {
-        printf("Invalid temperature! Please enter a value between %.1f and %.1f\r\n", MIN_TEMP, MAX_TEMP);
-    }
+
+if (new_temp >= MIN_TEMP && new_temp <= MAX_TEMP) {
+    target_temperature = new_temp;
+    printf("Target temperature set to: %.2f\r\n", target_temperature);
+} else {
+    printf("Invalid temperature! Please enter a value between %.1f and %.1f\r\n", MIN_TEMP, MAX_TEMP);
+}
+
+
 }
 
 /* USER CODE END 0 */
 
 int main(void)
 {
-  HAL_Init();
-  SystemClock_Config();
-  MX_GPIO_Init();
-  MX_USART3_UART_Init();
-  MX_SPI4_Init();
-  MX_TIM2_Init();
-  MX_TIM7_Init();
-  MX_TIM3_Init();
+HAL_Init();
+SystemClock_Config();
+MX_GPIO_Init();
+MX_USART3_UART_Init();
+MX_SPI4_Init();
+MX_TIM2_Init();
+MX_TIM7_Init();
+MX_TIM3_Init();
 
-  BMP2_Init(&bmp2dev);
-  HEATER_PWM_Init(&hheater);
-  FAN_PWM_Init(&hfan);
-  HAL_UART_Receive_IT(&huart3, rx_buffer, sizeof(rx_buffer)); // Start receiving user input
-  HAL_TIM_Base_Start(&htim7);
+BMP2_Init(&bmp2dev);
+HEATER_PWM_Init(&hheater);
+FAN_PWM_Init(&hfan);
+HAL_UART_Receive_IT(&huart3, rx_buffer, sizeof(rx_buffer)); // Start receiving user input
+HAL_TIM_Base_Start(&htim7);
 
-  while (1)
-  {
-    if (__HAL_TIM_GET_FLAG(&htim7, TIM_FLAG_UPDATE)) {
-        __HAL_TIM_CLEAR_FLAG(&htim7, TIM_FLAG_UPDATE);
+while (1)
+{
+if (__HAL_TIM_GET_FLAG(&htim7, TIM_FLAG_UPDATE)) {
+__HAL_TIM_CLEAR_FLAG(&htim7, TIM_FLAG_UPDATE);
 
         double temp;
         BMP2_ReadData(&bmp2dev, NULL, &temp);
         current_temperature = (float)temp;
 
-        // PID Control Logic
-        pid_error = target_temperature - current_temperature;
-        pid_integral += pid_error;
-        pid_integral = fminf(fmaxf(pid_integral, INTEGRAL_MIN), INTEGRAL_MAX);
-        pid_output = PID_KP_HEAT * pid_error + PID_KI_HEAT * pid_integral;
+        // PID Control
+        float pid_output_saturated = 0.0f; // Store the saturated PID output
+        const float back_calculation_gain = 0.1f; // Gain for anti-windup
+        float feedforward = 0.5f * (target_temperature - MIN_TEMP); // Scale based on system characteristics
+        pid_output += feedforward;
 
-        if (pid_output > 0) {
-            HEATER_PWM_WriteDuty(&hheater, fminf(pid_output, 100.0f));
+        // Derivative Filter Parameters
+        const float derivative_filter_constant = 0.9f; // Adjust as needed
+        float previous_derivative = 0.0f;
+
+        if (current_temperature < target_temperature) {
+            // Heating
+            pid_error = target_temperature - current_temperature;
+
+            // Integral term with anti-windup
+            pid_integral += pid_error;
+            if (pid_output_saturated != pid_output) { // Back-calculation
+                pid_integral -= back_calculation_gain * (pid_output_saturated - pid_output);
+            }
+            pid_integral = fminf(fmaxf(pid_integral, INTEGRAL_MIN), INTEGRAL_MAX); // Clamp
+
+            // Derivative term with filtering
+            pid_derivative = (pid_error - previous_error);
+            pid_derivative = derivative_filter_constant * previous_derivative + (1.0f - derivative_filter_constant) * pid_derivative;
+
+            // PID output
+            pid_output = (PID_KP * pid_error) + (PID_KI * pid_integral) + (PID_KD * pid_derivative);
+            pid_output_saturated = fminf(fmaxf(pid_output, 0.0f), 100.0f);
+
+            HEATER_PWM_WriteDuty(&hheater, 5 * pid_output_saturated);
             FAN_PWM_WriteDuty(&hfan, 0.0f);
         } else {
-            FAN_PWM_WriteDuty(&hfan, fminf(-pid_output, 100.0f));
+            // Cooling
+            pid_error = target_temperature - current_temperature;
+
+            // Integral term with anti-windup
+            pid_integral += pid_error;
+            if (pid_output_saturated != pid_output) { // Back-calculation
+                pid_integral -= back_calculation_gain * (pid_output_saturated - pid_output);
+            }
+            pid_integral = fminf(fmaxf(pid_integral, INTEGRAL_MIN), INTEGRAL_MAX); // Clamp
+
+            // Derivative term with filtering
+            pid_derivative = (pid_error - previous_error);
+            pid_derivative = derivative_filter_constant * previous_derivative + (1.0f - derivative_filter_constant) * pid_derivative;
+
+            // PID output
+            pid_output = (PID_KP * pid_error) + (PID_KI * pid_integral) + (PID_KD * pid_derivative);
+            pid_output_saturated = fminf(fmaxf(-pid_output, 0.0f), 100.0f);
+
+            FAN_PWM_WriteDuty(&hfan, 3 * pid_output_saturated);
             HEATER_PWM_WriteDuty(&hheater, 0.0f);
         }
 
+        // Update previous values
+        previous_error = pid_error;
+        previous_derivative = pid_derivative;
+
         // Send Temperature Data with CRC
-        if (HAL_GetTick() - last_temp_print_time >= 1000) {
-            int msg_len = snprintf((char *)temp_msg_buffer, sizeof(temp_msg_buffer),
-                                   "{\"id\":1, \"target_temp\":%.2f, \"temp\":%.2f, \"pid_output\":%.2f}",
-                                   target_temperature, current_temperature, pid_output);
+            if (HAL_GetTick() - last_temp_print_time >= 1000) {
+                int msg_len = snprintf((char *)temp_msg_buffer, sizeof(temp_msg_buffer),
+                                       "{\"id\":1, \"target_temp\":%.2f, \"temp\":%.2f, \"pid_output\":%.2f}",
+                                       target_temperature, current_temperature, pid_output);
 
-            uint16_t crc = calculate_crc(temp_msg_buffer, msg_len);
-            snprintf((char *)temp_msg_buffer + msg_len, sizeof(temp_msg_buffer) - msg_len, ", \"crc\":%04X}\r\n", crc);
+                uint16_t crc = calculate_crc(temp_msg_buffer, msg_len);
+                snprintf((char *)temp_msg_buffer + msg_len, sizeof(temp_msg_buffer) - msg_len, ", \"crc\":%04X}\r\n", crc);
 
-            HAL_UART_Transmit(&huart3, temp_msg_buffer, strlen((char *)temp_msg_buffer), HAL_MAX_DELAY);
-            last_temp_print_time = HAL_GetTick();
+                HAL_UART_Transmit(&huart3, temp_msg_buffer, strlen((char *)temp_msg_buffer), HAL_MAX_DELAY);
+                last_temp_print_time = HAL_GetTick();
+            }
         }
-    }
 
-    HAL_Delay(100); // Adjust control loop frequency if needed
+        HAL_Delay(100);
+    /* USER CODE END WHILE */
+
   }
+    /* USER CODE BEGIN 3 */
+
+  /* USER CODE END 3 */
 }
 
 /**
@@ -220,7 +277,21 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+void process_uart_message(const char *msg)
+{
+    char *target_temp_str = strstr(msg, "\"target_temp\":");
+    if (target_temp_str != NULL) {
+        target_temp_str += 14; // Move to the start of the value
+        float new_temp = atof(target_temp_str);
 
+        if (new_temp >= MIN_TEMP && new_temp <= MAX_TEMP) {
+            target_temperature = new_temp;
+            printf("Target temperature set to: %.2f\r\n", target_temperature);
+        } else {
+            printf("Invalid temperature! Please enter a value between %.1f and %.1f\r\n", MIN_TEMP, MAX_TEMP);
+        }
+    }
+}
 /* USER CODE END 4 */
 
 /**

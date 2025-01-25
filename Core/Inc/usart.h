@@ -17,6 +17,7 @@
   ******************************************************************************
   */
 /* USER CODE END Header */
+
 /* Define to prevent recursive inclusion -------------------------------------*/
 #ifndef __USART_H__
 #define __USART_H__
@@ -27,26 +28,44 @@ extern "C" {
 
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "usart_config.h" // Include the new configuration header
 
 /* USER CODE BEGIN Includes */
 
 /* USER CODE END Includes */
 
-extern UART_HandleTypeDef huart3;
-
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */
 
-void MX_USART3_UART_Init(void);
-
 /* USER CODE BEGIN Prototypes */
 
 /* USER CODE END Prototypes */
+
+/**
+  * @brief  UART MSP Initialization.
+  *         This function configures the hardware resources used in this example:
+  *         - Peripheral's clock enable
+  *         - Peripheral's GPIO Configuration
+  *         - NVIC configuration for UART interrupt request enable
+  * @param  huart: UART handle pointer
+  * @retval None
+  */
+void HAL_UART_MspInit(UART_HandleTypeDef* huart);
+
+/**
+  * @brief  UART MSP De-Initialization.
+  *         This function freeze the hardware resources used in this example:
+  *         - Disable the Peripheral's clock
+  *         - Revert GPIO configuration to their default state
+  *         - Disable NVIC for UART interrupt request
+  * @param  huart: UART handle pointer
+  * @retval None
+  */
+void HAL_UART_MspDeInit(UART_HandleTypeDef* huart);
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif /* __USART_H__ */
-

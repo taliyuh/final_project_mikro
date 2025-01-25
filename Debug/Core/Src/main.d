@@ -32,7 +32,8 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
  ../Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_uart.h \
  ../Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_uart_ex.h \
  ../Core/Inc/spi.h ../Core/Inc/main.h ../Core/Inc/tim.h \
- ../Core/Inc/usart.h ../Core/Inc/gpio.h \
+ ../Core/Inc/usart.h ../Core/Inc/usart_config.h \
+ ../Core/Inc/usart_config.h ../Core/Inc/gpio.h \
  C:/Users/bartl/Downloads/adrianwojcikpp\ NUCLEO-F746ZG-Examples-ver-2024-25\ main\ L06_Example(1)/Components/Inc/bmp2_config.h \
  C:/Users/bartl/Downloads/adrianwojcikpp\ NUCLEO-F746ZG-Examples-ver-2024-25\ main\ L06_Example(1)/Components/Inc/bmp2.h \
  C:/Users/bartl/Downloads/adrianwojcikpp\ NUCLEO-F746ZG-Examples-ver-2024-25\ main\ L06_Example(1)/Components/Inc/bmp2_defs.h \
@@ -79,6 +80,8 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
 ../Core/Inc/main.h:
 ../Core/Inc/tim.h:
 ../Core/Inc/usart.h:
+../Core/Inc/usart_config.h:
+../Core/Inc/usart_config.h:
 ../Core/Inc/gpio.h:
 C:/Users/bartl/Downloads/adrianwojcikpp\ NUCLEO-F746ZG-Examples-ver-2024-25\ main\ L06_Example(1)/Components/Inc/bmp2_config.h:
 C:/Users/bartl/Downloads/adrianwojcikpp\ NUCLEO-F746ZG-Examples-ver-2024-25\ main\ L06_Example(1)/Components/Inc/bmp2.h:
