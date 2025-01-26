@@ -153,7 +153,7 @@ int main(void)
             // Send Temperature Data with CRC
             if (HAL_GetTick() - last_temp_print_time >= 1000) {
                 int msg_len = snprintf((char *)temp_msg_buffer, sizeof(temp_msg_buffer),
-                                       "{\"id\":1, \"target_temp\":%.2f, \"temp\":%.2f, \"pid_output\":%.2f}",
+                                       "{\"id\":1, \"target_temp\":%.2f, \"temp\":%.2f, \"pid_output\":%.2f",
                                        target_temperature, current_temperature, pid_controller.output);
 
                 uint16_t crc = calculate_crc(temp_msg_buffer, msg_len);
