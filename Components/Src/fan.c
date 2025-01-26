@@ -1,9 +1,13 @@
-/*
- * fan.c
- *
- *  Created on: Jan 21, 2025
- *      Author: bartl
- */
+/**
+  ******************************************************************************
+  * @file     : fan_config.c
+  * @author   : taliyuh bartlomiej.hryniewski@student.put.poznan.pl
+  * @version  : 1.0.0
+  * @date     : Jan 21, 2025
+  * @brief    : Electric fan components configuration file
+  *
+  ******************************************************************************
+  */
 
 /* Private includes ----------------------------------------------------------*/
 #include "fan.h"
@@ -101,8 +105,8 @@ void FAN_PWM_WriteDuty(FAN_PWM_Handle_TypeDef* hfan, float duty)
   // Clamp the duty cycle to the valid range [0.0, 100.0]
   if (duty < 0.0f) {
     duty = 0.0f;
-  } else if (duty > 100.0f) {
-    duty = 100.0f;
+  } else if (duty > 99.0f) {
+    duty = 99.0f;
   }
 
   // Map the duty cycle to the new range [minDuty, 100.0]

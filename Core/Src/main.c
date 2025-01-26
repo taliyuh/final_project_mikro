@@ -37,12 +37,12 @@
 
 // Temperature control limits
 #define MIN_TEMP 22.0f
-#define MAX_TEMP 32.5f
+#define MAX_TEMP 36.5f
 
 /* USER CODE BEGIN PV */
 
 uint8_t rx_buffer[20];
-float target_temperature = 32.0f;
+float target_temperature = 23.0f;
 float current_temperature = 0.0f;
 uint8_t temp_msg_buffer[100];
 uint32_t last_temp_print_time = 0;
@@ -145,7 +145,7 @@ int main(void)
                 FAN_PWM_WriteDuty(&hfan, 0.0f); // Fan off during heating
             } else {
                 // Cooling
-                pid_controller.output_saturated = fminf(fmaxf(-pid_controller.output, 0.0f), 100.0f);
+                pid_controller.output_saturated = fminf(fmaxf(abs(pid_controller.output), 0.0f), 100.0f);
                 FAN_PWM_WriteDuty(&hfan, 3 * pid_controller.output_saturated);
                 HEATER_PWM_WriteDuty(&hheater, 0.0f); // Heater off during cooling
             }
