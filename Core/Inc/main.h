@@ -67,7 +67,6 @@ void Error_Handler(void);
 #define BMP280_SPI_MOSI_GPIO_Port GPIOE
 #define USER_Btn_Pin GPIO_PIN_13
 #define USER_Btn_GPIO_Port GPIOC
-#define USER_Btn_EXTI_IRQn EXTI15_10_IRQn
 #define MCO_Pin GPIO_PIN_0
 #define MCO_GPIO_Port GPIOH
 #define RMII_MDC_Pin GPIO_PIN_1
@@ -88,10 +87,10 @@ void Error_Handler(void);
 #define RMII_RXD1_GPIO_Port GPIOC
 #define LD1_Pin GPIO_PIN_0
 #define LD1_GPIO_Port GPIOB
-#define Fan_Pin GPIO_PIN_10
-#define Fan_GPIO_Port GPIOB
 #define LCD_D7_Pin GPIO_PIN_12
 #define LCD_D7_GPIO_Port GPIOF
+#define Fan_Pin GPIO_PIN_10
+#define Fan_GPIO_Port GPIOB
 #define LCD_D4_Pin GPIO_PIN_12
 #define LCD_D4_GPIO_Port GPIOB
 #define RMII_TXD1_Pin GPIO_PIN_13

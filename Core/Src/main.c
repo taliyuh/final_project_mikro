@@ -25,14 +25,12 @@
 #include "spi.h"
 #include "tim.h"
 #include "usart.h"
-#include "usart_config.h"
 #include "gpio.h"
 #include "bmp2_config.h"
 #include "heater_config.h"
 #include "fan_config.h"
 #include "pid_control.h"
 #include "fatfs.h"
-#include "fatfs_sd.h"
 #include "LCD_HD44780.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -45,11 +43,11 @@
 /* USER CODE BEGIN PV */
 
 uint8_t rx_buffer[20];
-float target_temperature = 23.0f;
+float target_temperature = 30.0f;
 float current_temperature = 0.0f;
 uint8_t temp_msg_buffer[100];
 uint32_t last_temp_print_time = 0;
-
+SPI_HandleTypeDef hspi5;
 FATFS fs; 
 FATFS *pfs; 
 FIL fil; 
@@ -82,9 +80,21 @@ uint16_t calculate_crc(const uint8_t *data, size_t length);
 void process_user_input(void);
 
 /* USER CODE BEGIN 0 */
+int __io_putchar(int ch)
+{
+  HAL_UART_Transmit(&huart3, (uint8_t *)&ch, 1, HAL_MAX_DELAY);
+  return ch;
+}
+
+// If the above doesn't work, you might need this instead (or in addition):
 int _write(int file, char *ptr, int len)
 {
-    return (HAL_UART_Transmit(&huart3, (uint8_t *)ptr, len, HAL_MAX_DELAY) == HAL_OK) ? len : -1;
+  int DataIdx;
+  for (DataIdx = 0; DataIdx < len; DataIdx++)
+  {
+    __io_putchar(*ptr++);
+  }
+  return len;
 }
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
@@ -126,12 +136,39 @@ void process_user_input(void)
     }
 }
 
+void format_time(uint32_t ticks, char *time_buffer, size_t buffer_size)
+{
+    uint32_t total_seconds = ticks / 1000;
+    uint32_t hours = total_seconds / 3600;
+    uint32_t minutes = (total_seconds % 3600) / 60;
+    uint32_t seconds = total_seconds % 60;
+
+    snprintf(time_buffer, buffer_size, "%02lu:%02lu:%02lu", hours, minutes, seconds);
+}
+
+void send_temperature_data_with_time()
+{
+    if (HAL_GetTick() - last_temp_print_time >= 1000) {
+        char time_buffer[10];
+        format_time(HAL_GetTick(), time_buffer, sizeof(time_buffer)); // Get formatted time string
+
+        int msg_len = snprintf((char *)temp_msg_buffer, sizeof(temp_msg_buffer),
+                               "{\"id\":1, \"time\":\"%s\", \"target_temp\":%.2f, \"temp\":%.2f, \"pid_output\":%.2f",
+                               time_buffer, target_temperature, current_temperature, pid_controller.output);
+
+        uint16_t crc = calculate_crc(temp_msg_buffer, msg_len);
+        snprintf((char *)temp_msg_buffer + msg_len, sizeof(temp_msg_buffer) - msg_len, ", \"crc\":%04X}\r\n", crc);
+
+        HAL_UART_Transmit(&huart3, temp_msg_buffer, strlen((char *)temp_msg_buffer), HAL_MAX_DELAY);
+        last_temp_print_time = HAL_GetTick();
+    }
+}
+
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
   if(GPIO_Pin == USER_Btn_Pin)
     USER_Btn_RisingEdgeDetected = 1;
 }
-
 
 /* USER CODE END 0 */
 
@@ -161,13 +198,13 @@ int main(void)
 
     HAL_Delay(500);
 
-  		fres = f_mount(&fs, "", 0); //mounting SD
-  		fres = f_open(&fil, "temp_log.csv", FA_CREATE_ALWAYS | FA_WRITE); // creating file
-  		sprintf(buffer, "#,Time Duration[sek],Targer Temp[C],Current Temp[C]\n"); //creating heders
-  		f_puts(buffer, &fil); //printing
+      fres = f_mount(&fs, "", 0); //mounting SD
+      fres = f_open(&fil, "temp_log.csv", FA_CREATE_ALWAYS | FA_WRITE); // creating file
+      sprintf(buffer, "#,Time Duration[sek],Targer Temp[C],Current Temp[C]\n"); //creating heders
+      f_puts(buffer, &fil); //printing
 
-    char line1[17]; 
-	   char line2[17];
+    char line1[17];
+     char line2[17];
 
     while (1) {
         if (__HAL_TIM_GET_FLAG(&htim7, TIM_FLAG_UPDATE)) {
@@ -176,6 +213,14 @@ int main(void)
             double temp;
             BMP2_ReadData(&bmp2dev, NULL, &temp);
             current_temperature = (float)temp;
+
+            __io_putchar('H');
+            __io_putchar('e');
+            __io_putchar('l');
+            __io_putchar('l');
+            __io_putchar('o');
+            __io_putchar('\r');
+            __io_putchar('\n');
 
             // Update target temperature for the single controller
             pid_controller.target_temperature = target_temperature;
@@ -200,47 +245,37 @@ int main(void)
             }
 
             // Send Temperature Data with CRC
-            if (HAL_GetTick() - last_temp_print_time >= 1000) {
-                int msg_len = snprintf((char *)temp_msg_buffer, sizeof(temp_msg_buffer),
-                                       "{\"id\":1, \"target_temp\":%.2f, \"temp\":%.2f, \"pid_output\":%.2f",
-                                       target_temperature, current_temperature, pid_controller.output);
-
-                uint16_t crc = calculate_crc(temp_msg_buffer, msg_len);
-                snprintf((char *)temp_msg_buffer + msg_len, sizeof(temp_msg_buffer) - msg_len, ", \"crc\":%04X}\r\n", crc);
-
-                HAL_UART_Transmit(&huart3, temp_msg_buffer, strlen((char *)temp_msg_buffer), HAL_MAX_DELAY);
-                last_temp_print_time = HAL_GetTick();
-            }
+            send_temperature_data_with_time();
         }
 
-  	  snprintf(line1, sizeof(line1), "TarTemp: %.1f ", target_temperature);
-  	  snprintf(line2, sizeof(line2), "CurTemp: %.1f ", current_temperature);
-  	  LCD_SetCursor(0, 0); 
-  	  LCD_Print(line1);
-  	  LCD_WriteData(0); 
-  	  LCD_Print("C");
-  	  LCD_SetCursor(1, 0); 
-  	  LCD_Print(line2);
-  	  LCD_WriteData(0); 
-  	  LCD_Print("C");
+      snprintf(line1, sizeof(line1), "TarTemp: %.1f ", target_temperature);
+      snprintf(line2, sizeof(line2), "CurTemp: %.1f ", current_temperature);
+      LCD_SetCursor(0, 0);
+      LCD_Print(line1);
+      LCD_WriteData(0);
+      LCD_Print("C");
+      LCD_SetCursor(1, 0);
+      LCD_Print(line2);
+      LCD_WriteData(0);
+      LCD_Print("C");
 
-  	  sprintf(buffer, "%ld,%.1f,%.1f,%.1f\n", Numbah, dur, target_temperature, current_temperature);
-	  f_puts(buffer, &fil);
+      sprintf(buffer, "%ld,%.1f,%.1f,%.1f\n", Numbah, dur, target_temperature, current_temperature);
+    f_puts(buffer, &fil);
 
-	  Numbah += 1;
-	  dur += 0.1;
+    Numbah += 1;
+    dur += 0.1;
 
-	  if(USER_Btn_RisingEdgeDetected) //saving and dismounting card
-		  {
-			HAL_Delay(10);
-			USER_Btn_RisingEdgeDetected = 0;
-			if(HAL_GPIO_ReadPin(USER_Btn_GPIO_Port, USER_Btn_Pin) == GPIO_PIN_SET) //button pressed
-			{
-			  HAL_GPIO_TogglePin(LD1_GPIO_Port, LD1_Pin); //led1 on
-			  fres = f_close(&fil);	//file closed
-			  f_mount(NULL, "", 1); //card dismounted 
-			}
-		  }
+    if(USER_Btn_RisingEdgeDetected) //saving and dismounting card
+      {
+      HAL_Delay(10);
+      USER_Btn_RisingEdgeDetected = 0;
+      if(HAL_GPIO_ReadPin(USER_Btn_GPIO_Port, USER_Btn_Pin) == GPIO_PIN_SET) //button pressed
+      {
+        HAL_GPIO_TogglePin(LD1_GPIO_Port, LD1_Pin); //led1 on
+        fres = f_close(&fil); //file closed
+        f_mount(NULL, "", 1); //card dismounted
+      }
+      }
 
         HAL_Delay(100);
         /* USER CODE END WHILE */
