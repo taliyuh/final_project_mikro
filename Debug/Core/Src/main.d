@@ -31,8 +31,15 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
  C:/Users/bartl/STM32Cube/Repository/STM32Cube_FW_F7_V1.17.2/Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_tim_ex.h \
  C:/Users/bartl/STM32Cube/Repository/STM32Cube_FW_F7_V1.17.2/Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_uart.h \
  C:/Users/bartl/STM32Cube/Repository/STM32Cube_FW_F7_V1.17.2/Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_uart_ex.h \
- ../Core/Inc/spi.h ../Core/Inc/main.h ../Core/Inc/tim.h \
- ../Core/Inc/usart.h ../Core/Inc/gpio.h \
+ ../FATFS/App/fatfs.h \
+ C:/Users/bartl/STM32Cube/Repository/STM32Cube_FW_F7_V1.17.2/Middlewares/Third_Party/FatFs/src/ff.h \
+ C:/Users/bartl/STM32Cube/Repository/STM32Cube_FW_F7_V1.17.2/Middlewares/Third_Party/FatFs/src/integer.h \
+ ../FATFS/Target/ffconf.h \
+ C:/Users/bartl/STM32Cube/Repository/STM32Cube_FW_F7_V1.17.2/Middlewares/Third_Party/FatFs/src/ff_gen_drv.h \
+ C:/Users/bartl/STM32Cube/Repository/STM32Cube_FW_F7_V1.17.2/Middlewares/Third_Party/FatFs/src/diskio.h \
+ C:/Users/bartl/STM32Cube/Repository/STM32Cube_FW_F7_V1.17.2/Middlewares/Third_Party/FatFs/src/ff.h \
+ ../FATFS/Target/user_diskio.h ../Core/Inc/spi.h ../Core/Inc/main.h \
+ ../Core/Inc/tim.h ../Core/Inc/usart.h ../Core/Inc/gpio.h \
  C:/Users/bartl/Downloads/adrianwojcikpp\ NUCLEO-F746ZG-Examples-ver-2024-25\ main\ L06_Example(1)/Components/Inc/bmp2_config.h \
  C:/Users/bartl/Downloads/adrianwojcikpp\ NUCLEO-F746ZG-Examples-ver-2024-25\ main\ L06_Example(1)/Components/Inc/bmp2.h \
  C:/Users/bartl/Downloads/adrianwojcikpp\ NUCLEO-F746ZG-Examples-ver-2024-25\ main\ L06_Example(1)/Components/Inc/bmp2_defs.h \
@@ -42,14 +49,7 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
  C:/Users/bartl/Downloads/adrianwojcikpp\ NUCLEO-F746ZG-Examples-ver-2024-25\ main\ L06_Example(1)/Components/Inc/pwm.h \
  C:/Users/bartl/Downloads/adrianwojcikpp\ NUCLEO-F746ZG-Examples-ver-2024-25\ main\ L06_Example(1)/Components/Inc/fan_config.h \
  C:/Users/bartl/Downloads/adrianwojcikpp\ NUCLEO-F746ZG-Examples-ver-2024-25\ main\ L06_Example(1)/Components/Inc/fan.h \
- ../Core/Inc/pid_control.h ../FATFS/App/fatfs.h \
- C:/Users/bartl/STM32Cube/Repository/STM32Cube_FW_F7_V1.17.2/Middlewares/Third_Party/FatFs/src/ff.h \
- C:/Users/bartl/STM32Cube/Repository/STM32Cube_FW_F7_V1.17.2/Middlewares/Third_Party/FatFs/src/integer.h \
- ../FATFS/Target/ffconf.h \
- C:/Users/bartl/STM32Cube/Repository/STM32Cube_FW_F7_V1.17.2/Middlewares/Third_Party/FatFs/src/ff_gen_drv.h \
- C:/Users/bartl/STM32Cube/Repository/STM32Cube_FW_F7_V1.17.2/Middlewares/Third_Party/FatFs/src/diskio.h \
- C:/Users/bartl/STM32Cube/Repository/STM32Cube_FW_F7_V1.17.2/Middlewares/Third_Party/FatFs/src/ff.h \
- ../FATFS/Target/user_diskio.h ../Core/Inc/LCD_HD44780.h
+ ../Core/Inc/pid_control.h ../Core/Inc/LCD_HD44780.h
 ../Core/Inc/main.h:
 C:/Users/bartl/STM32Cube/Repository/STM32Cube_FW_F7_V1.17.2/Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal.h:
 ../Core/Inc/stm32f7xx_hal_conf.h:
@@ -83,6 +83,14 @@ C:/Users/bartl/STM32Cube/Repository/STM32Cube_FW_F7_V1.17.2/Drivers/STM32F7xx_HA
 C:/Users/bartl/STM32Cube/Repository/STM32Cube_FW_F7_V1.17.2/Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_tim_ex.h:
 C:/Users/bartl/STM32Cube/Repository/STM32Cube_FW_F7_V1.17.2/Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_uart.h:
 C:/Users/bartl/STM32Cube/Repository/STM32Cube_FW_F7_V1.17.2/Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_uart_ex.h:
+../FATFS/App/fatfs.h:
+C:/Users/bartl/STM32Cube/Repository/STM32Cube_FW_F7_V1.17.2/Middlewares/Third_Party/FatFs/src/ff.h:
+C:/Users/bartl/STM32Cube/Repository/STM32Cube_FW_F7_V1.17.2/Middlewares/Third_Party/FatFs/src/integer.h:
+../FATFS/Target/ffconf.h:
+C:/Users/bartl/STM32Cube/Repository/STM32Cube_FW_F7_V1.17.2/Middlewares/Third_Party/FatFs/src/ff_gen_drv.h:
+C:/Users/bartl/STM32Cube/Repository/STM32Cube_FW_F7_V1.17.2/Middlewares/Third_Party/FatFs/src/diskio.h:
+C:/Users/bartl/STM32Cube/Repository/STM32Cube_FW_F7_V1.17.2/Middlewares/Third_Party/FatFs/src/ff.h:
+../FATFS/Target/user_diskio.h:
 ../Core/Inc/spi.h:
 ../Core/Inc/main.h:
 ../Core/Inc/tim.h:
@@ -98,12 +106,4 @@ C:/Users/bartl/Downloads/adrianwojcikpp\ NUCLEO-F746ZG-Examples-ver-2024-25\ mai
 C:/Users/bartl/Downloads/adrianwojcikpp\ NUCLEO-F746ZG-Examples-ver-2024-25\ main\ L06_Example(1)/Components/Inc/fan_config.h:
 C:/Users/bartl/Downloads/adrianwojcikpp\ NUCLEO-F746ZG-Examples-ver-2024-25\ main\ L06_Example(1)/Components/Inc/fan.h:
 ../Core/Inc/pid_control.h:
-../FATFS/App/fatfs.h:
-C:/Users/bartl/STM32Cube/Repository/STM32Cube_FW_F7_V1.17.2/Middlewares/Third_Party/FatFs/src/ff.h:
-C:/Users/bartl/STM32Cube/Repository/STM32Cube_FW_F7_V1.17.2/Middlewares/Third_Party/FatFs/src/integer.h:
-../FATFS/Target/ffconf.h:
-C:/Users/bartl/STM32Cube/Repository/STM32Cube_FW_F7_V1.17.2/Middlewares/Third_Party/FatFs/src/ff_gen_drv.h:
-C:/Users/bartl/STM32Cube/Repository/STM32Cube_FW_F7_V1.17.2/Middlewares/Third_Party/FatFs/src/diskio.h:
-C:/Users/bartl/STM32Cube/Repository/STM32Cube_FW_F7_V1.17.2/Middlewares/Third_Party/FatFs/src/ff.h:
-../FATFS/Target/user_diskio.h:
 ../Core/Inc/LCD_HD44780.h:
