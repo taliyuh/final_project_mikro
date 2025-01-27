@@ -31,6 +31,9 @@
 #include "heater_config.h"
 #include "fan_config.h"
 #include "pid_control.h"
+#include "fatfs.h"
+#include "fatfs_sd.h"
+#include "LCD_HD44780.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -46,6 +49,30 @@ float target_temperature = 23.0f;
 float current_temperature = 0.0f;
 uint8_t temp_msg_buffer[100];
 uint32_t last_temp_print_time = 0;
+
+FATFS fs; 
+FATFS *pfs; 
+FIL fil; 
+FRESULT fres;
+DWORD fre_clust;
+char buffer[100]; // for LCD
+
+uint32_t Numbah = 0;   // counting first column
+float dur = 0.0;  //time duration
+
+volatile _Bool USER_Btn_RisingEdgeDetected = 0; //both to help tell when to dismount SD card
+GPIO_PinState LD1_State = GPIO_PIN_RESET; 
+
+uint8_t degree_symbol[8] = { // the degree simbol on LCD 
+    0b00110,
+    0b01001,
+    0b01001,
+    0b00110,
+    0b00000,
+    0b00000,
+    0b00000,
+    0b00000
+};
 
 /* USER CODE END PV */
 
@@ -99,6 +126,13 @@ void process_user_input(void)
     }
 }
 
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+  if(GPIO_Pin == USER_Btn_Pin)
+    USER_Btn_RisingEdgeDetected = 1;
+}
+
+
 /* USER CODE END 0 */
 
 int main(void)
@@ -107,6 +141,7 @@ int main(void)
     SystemClock_Config();
     MX_GPIO_Init();
     MX_USART3_UART_Init();
+    MX_FATFS_Init();
     MX_SPI4_Init();
     MX_TIM2_Init();
     MX_TIM7_Init();
@@ -119,6 +154,20 @@ int main(void)
     HAL_TIM_Base_Start(&htim7);
     PID_Init();
     pid_controller.target_temperature = target_temperature;
+
+    LCD_Init();
+    LCD_Clear();
+    LCD_CreateCustomChar(degree_symbol, 0);
+
+    HAL_Delay(500);
+
+  		fres = f_mount(&fs, "", 0); //mounting SD
+  		fres = f_open(&fil, "temp_log.csv", FA_CREATE_ALWAYS | FA_WRITE); // creating file
+  		sprintf(buffer, "#,Time Duration[sek],Targer Temp[C],Current Temp[C]\n"); //creating heders
+  		f_puts(buffer, &fil); //printing
+
+    char line1[17]; 
+	   char line2[17];
 
     while (1) {
         if (__HAL_TIM_GET_FLAG(&htim7, TIM_FLAG_UPDATE)) {
@@ -163,6 +212,35 @@ int main(void)
                 last_temp_print_time = HAL_GetTick();
             }
         }
+
+  	  snprintf(line1, sizeof(line1), "TarTemp: %.1f ", target_temperature);
+  	  snprintf(line2, sizeof(line2), "CurTemp: %.1f ", current_temperature);
+  	  LCD_SetCursor(0, 0); 
+  	  LCD_Print(line1);
+  	  LCD_WriteData(0); 
+  	  LCD_Print("C");
+  	  LCD_SetCursor(1, 0); 
+  	  LCD_Print(line2);
+  	  LCD_WriteData(0); 
+  	  LCD_Print("C");
+
+  	  sprintf(buffer, "%ld,%.1f,%.1f,%.1f\n", Numbah, dur, target_temperature, current_temperature);
+	  f_puts(buffer, &fil);
+
+	  Numbah += 1;
+	  dur += 0.1;
+
+	  if(USER_Btn_RisingEdgeDetected) //saving and dismounting card
+		  {
+			HAL_Delay(10);
+			USER_Btn_RisingEdgeDetected = 0;
+			if(HAL_GPIO_ReadPin(USER_Btn_GPIO_Port, USER_Btn_Pin) == GPIO_PIN_SET) //button pressed
+			{
+			  HAL_GPIO_TogglePin(LD1_GPIO_Port, LD1_Pin); //led1 on
+			  fres = f_close(&fil);	//file closed
+			  f_mount(NULL, "", 1); //card dismounted 
+			}
+		  }
 
         HAL_Delay(100);
         /* USER CODE END WHILE */
