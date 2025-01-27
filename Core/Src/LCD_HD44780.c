@@ -1,12 +1,15 @@
-/*
- * LCD_HD44780.c
- *
- *	The MIT License.
- *  Created on: 11.07.2018
- *      Author: Mateusz Salamon
- *      www.msalamon.pl
- *
- */
+/**
+  ******************************************************************************
+  * @file     : LCD_HD44780.c
+  * @author   : Mateusz Salamon   www.msalamon.pl
+  * @version  : 1.0.0
+  * @date     : Jul 11, 2018
+  * @brief    : LCD screen driver
+  *
+  * The MIT License.
+  ******************************************************************************
+  */
+
 #include "main.h"
 #include "stm32f7xx_hal.h"
 #include "gpio.h"

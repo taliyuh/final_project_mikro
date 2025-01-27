@@ -1,3 +1,14 @@
+/**
+  ******************************************************************************
+  * @file     : fatfs_sd.h
+  * @author   : Jan Jakubowski    jan.jakubowski@student.put.poznan.pl
+  * @version  : 1.0.0
+  * @date     : Jan 26, 2025
+  * @brief    : SD card adapter driver
+  *
+  ******************************************************************************
+  */
+
 #ifndef __FATFS_SD_H
 #define __FATFS_SD_H
 

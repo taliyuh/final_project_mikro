@@ -1,4 +1,14 @@
-
+/**
+  ******************************************************************************
+  * @file     : LCD_HD44780.c
+  * @author   : Mateusz Salamon   www.msalamon.pl
+  * @version  : 1.0.0
+  * @date     : Jul 11, 2018
+  * @brief    : LCD screen configuration file
+  *
+  * The MIT License.
+  ******************************************************************************
+  */
 
 #ifndef LCD_HD44780_H_
 #define LCD_HD44780_H_

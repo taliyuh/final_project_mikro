@@ -1,3 +1,14 @@
+/**
+  ******************************************************************************
+  * @file     : fatfs_sd.c
+  * @author   : Jan Jakubowski    jan.jakubowski@student.put.poznan.pl
+  * @version  : 1.0.0
+  * @date     : Jan 26, 2025
+  * @brief    : SD card adapter configuration file
+  *
+  ******************************************************************************
+  */
+
 #define TRUE  1
 #define FALSE 0
 #define bool BYTE
